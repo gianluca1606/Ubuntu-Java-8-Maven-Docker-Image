@@ -1,46 +1,18 @@
-# Reference URL: https://runnable.com/docker/java/dockerize-your-java-application
-# Reference URL: https://www.howtoforge.com/tutorial/how-to-create-docker-images-with-dockerfile/
-# Reference URL: https://hub.docker.com/r/mcpayment/ubuntu1404-java8/~/dockerfile/
-# Reference URL: https://github.com/TexaiCognitiveArchitecture/docker-java8-jenkins-maven-git-nano
-# Reference URL: https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/#apt-get
-# Reference Command: docker search ubuntu/java
+FROM adoptopenjdk/openjdk8:nightly
 
-# Download base image ubuntu 14.04
-FROM ubuntu:trusty
+MAINTAINER Dinakar Guniguntala <dinakar.g@in.ibm.com> (@dinogun)
 
-MAINTAINER  Ankush Goyal <ankush.goyal@prontoitlabs.com>
- 
-# Prepare installation of Oracle Java 8
-ENV JAVA_VER 8
-ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
+ARG MAVEN_VERSION="3.6.1"
+ARG USER_HOME_DIR="/root"
+ARG SHA="b98a1905eb554d07427b2e5509ff09bd53e2f1dd7a0afa38384968b113abef02"
+ARG BASE_URL="https://apache.osuosl.org/maven/maven-3/${MAVEN_VERSION}/binaries"
 
-# Install git, wget, Oracle Java8
-RUN echo 'deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main' >> /etc/apt/sources.list && \
-    echo 'deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main' >> /etc/apt/sources.list && \
-    echo 'deb http://archive.ubuntu.com/ubuntu trusty main universe' >> /etc/apt/sources.list && \
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys C2518248EEA14886 && \
-    apt-get update && \
-    apt-get install -y git wget && \
-    echo oracle-java${JAVA_VER}-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections && \
-    apt-get install -y --force-yes --no-install-recommends oracle-java${JAVA_VER}-installer oracle-java${JAVA_VER}-set-default && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
-    rm -rf /var/cache/oracle-jdk${JAVA_VER}-installer
+RUN mkdir -p /usr/share/maven \
+    && curl -Lso  /tmp/maven.tar.gz ${BASE_URL}/apache-maven-${MAVEN_VERSION}-bin.tar.gz \
+    && echo "${SHA}  /tmp/maven.tar.gz" | sha256sum -c - \
+    && tar -xzC /usr/share/maven --strip-components=1 -f /tmp/maven.tar.gz \
+    && rm -v /tmp/maven.tar.gz \
+    && ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
 
-# Set Oracle Java as the default Java
-RUN update-java-alternatives -s java-8-oracle
-RUN echo "export JAVA_HOME=/usr/lib/jvm/java-8-oracle" >> ~/.bashrc
-
-# Install maven 3.3.9
-RUN wget --no-verbose -O /tmp/apache-maven-3.3.9-bin.tar.gz http://www-eu.apache.org/dist/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz && \
-    tar xzf /tmp/apache-maven-3.3.9-bin.tar.gz -C /opt/ && \
-    ln -s /opt/apache-maven-3.3.9 /opt/maven && \
-    ln -s /opt/maven/bin/mvn /usr/local/bin  && \
-    rm -f /tmp/apache-maven-3.3.9-bin.tar.gz
-
-
-ENV MAVEN_HOME /opt/maven
-
-RUN mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
-
-EXPOSE 80 443
+ENV MAVEN_HOME /usr/share/maven
+ENV MAVEN_CONFIG "${USER_HOME_DIR}/.m2"
