@@ -38,6 +38,7 @@ RUN wget --no-verbose -O /tmp/apache-maven-3.3.9-bin.tar.gz http://www-eu.apache
     ln -s /opt/maven/bin/mvn /usr/local/bin  && \
     rm -f /tmp/apache-maven-3.3.9-bin.tar.gz
 
+RUN mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
 ENV MAVEN_HOME /opt/maven
 
 EXPOSE 80 443
