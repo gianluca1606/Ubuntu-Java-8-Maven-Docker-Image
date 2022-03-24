@@ -15,4 +15,4 @@ RUN mkdir -p /usr/share/maven \
     && ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
 
 ENV MAVEN_HOME /usr/share/maven
-ENV MAVEN_CONFIG "${USER_HOME_DIR}/.m2"
+#ENV MAVEN_CONFIG "${USER_HOME_DIR}/.m2"
